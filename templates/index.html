@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра CABO</title>
+    <link rel="stylesheet" href="/static/style.css?v=31">
+    
+    <!-- Toastify CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <header>
+        <div class="logo">CABO</div>
+        <div class="room-info" id="room-info-badge" style="display: none;">
+            <span id="room-code-display"></span>
+        </div>
+        <div class="header-actions">
+            <button id="btn-invite-room" class="btn-secondary" style="display: none;">ПРИГЛАСИТЬ</button>
+            <button id="btn-reset-header" class="btn-danger" style="display: none;">СБРОСИТЬ</button>
+            <div id="connection-status">Отключено</div>
+        </div>
+    </header>
+
+    <!-- Тосты -->
+    <div id="toast-container"></div>
+
+    <div id="game-container" style="display: none;">
+        <!-- Игровой стол -->
+        <div id="table">
+            <div id="turn-timer-container" style="display: none;">
+                <div id="turn-timer-bar"></div>
+            </div>
+            
+            <div id="opponents-area"></div>
+            
+            <div id="center-area">
+                <div class="deck-area">
+                    <div class="card-pile deck" id="deck">
+                        <div class="card card-back"><span>CABO</span><span class="card-count" id="deck-count">x54</span></div>
+                    </div>
+                </div>
+                <div class="discard-area">
+                    <div class="card-pile discard" id="discard-pile">
+                        <div class="card empty">Сброс</div>
+                    </div>
+                </div>
+                <div id="drawn-card-zone" style="display: none;">
+                    <div id="drawn-card"></div>
+                </div>
+                <div id="hint-text" class="action-prompt"></div>
+            </div>
+
+            <div id="player-area">
+                <div class="player-info" id="my-info">
+                    ВАШИ КАРТЫ
+                </div>
+                <div class="hand" id="player-hand"></div>
+                <button id="btn-cabo" class="btn-cabo">СКАЗАТЬ CABO!</button>
+                <button id="lobby-start-btn" class="btn-primary" style="display: none;">НАЧАТЬ ИГРУ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Лобби -->
+    <div id="lobby-screen" class="active">
+        <div class="lobby-content">
+            <div class="player-setup">
+                <input type="text" id="player-name" placeholder="Ваше имя (до 10 симв.)" maxlength="10">
+            </div>
+            <div class="room-actions">
+                <button id="btn-create-room" class="btn-primary">Создать новую игру</button>
+                <div class="divider">или</div>
+                <div class="join-room">
+                    <input type="text" id="input-room-code" placeholder="Код (4 буквы)" maxlength="4" style="text-transform: uppercase;">
+                    <button id="btn-join-room" class="btn-secondary">Войти</button>
+                </div>
+            </div>
+            
+            <div id="lobby-settings" class="room-settings" style="display: none;">
+                <h3>Настройки игры</h3>
+                <div class="setting-row">
+                    <label>Тип лимита:</label>
+                    <select id="settings-limit-type">
+                        <option value="score">Очки</option>
+                        <option value="rounds">Раунды</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Значение:</label>
+                    <select id="settings-limit-value">
+                        <option value="50">50</option>
+                        <option value="100" selected>100</option>
+                        <option value="150">150</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label>Брать из сброса:</label>
+                    <input type="checkbox" id="settings-allow-discard-draw" checked>
+                </div>
+                <div class="setting-row">
+                    <label>Время на ход (сек):</label>
+                    <select id="settings-turn-timeout">
+                        <option value="30">30</option>
+                        <option value="60" selected>60</option>
+                        <option value="120">120</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалки -->
+    <div id="reveal-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2 id="reveal-text">Подсмотренная карта</h2>
+            <div id="reveal-card-placeholder"></div>
+            <button id="btn-close-reveal" class="btn-primary">Понятно</button>
+        </div>
+    </div>
+
+    <div id="black-king-options" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Действие Черного Короля</h2>
+            <p>Вы подсмотрели карту. Что сделать?</p>
+            <div class="btn-group">
+                <button id="btn-bk-swap-mine" class="btn-primary">Поменять со своей</button>
+                <button id="btn-bk-swap-other" class="btn-secondary">Поменять с чужой</button>
+                <button id="btn-bk-cancel" class="btn-danger">Оставить как есть</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="score-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Результаты раунда</h2>
+            <div id="scoreboard"></div>
+            <button id="btn-restart" class="btn-primary">Следующий раунд / Новая игра</button>
+        </div>
+    </div>
+
+    <div id="overflow-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>Ваши карты</h2>
+            <div id="overflow-cards-grid" class="cards-grid"></div>
+            <button id="btn-close-overflow" class="btn-secondary">Закрыть</button>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="/static/app.js?v=31"></script>
+</body>
+</html>
